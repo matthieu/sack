@@ -6,7 +6,7 @@ import sack._
 //
 
 object ChickenApp extends SackApp {
-  def build = (env: Req) =>  (200, Map("Content-Type"->"text/plain"), List("In Every Pot"))    
+  def build = (env: Req) => (200, Map("Content-Type"->"text/plain"), List("In Every Pot"))    
 }
 
 // Slightly more complex example, an bare app and a handler
