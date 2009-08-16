@@ -17,12 +17,13 @@ trait SackApp extends SackTypes {
   private var server: Server = null
 
   def main(args: Array[String]) {
+    System.setProperty("org.mortbay.log.class", "sack.QuietJettyLogger");
     server = new Server(port)
     server.addHandler(new JettyHandler(build()));
     server.start();
   }
 
-  def build(): Function1[Req, Resp]
+  def build(): Req => Resp
 
   def stop() {
     server.stop
@@ -30,11 +31,11 @@ trait SackApp extends SackTypes {
   }
 }
 
-trait SackHandler extends Function1[SackTypes#Req, SackTypes#Resp] with SackTypes {
+trait SackHandler extends (SackTypes#Req => SackTypes#Resp) with SackTypes {
   def apply(env: Req): Resp
 }
 
-class JettyHandler(h: Function1[SackTypes#Req, SackTypes#Resp]) extends AbstractHandler with SackTypes {
+class JettyHandler(h: (SackTypes#Req => SackTypes#Resp)) extends AbstractHandler with SackTypes {
 
   def handle(target: String, request: HttpServletRequest, response: HttpServletResponse, dispatch: Int) {
     val base_request = request match {
@@ -73,3 +74,19 @@ class JettyHandler(h: Function1[SackTypes#Req, SackTypes#Resp]) extends Abstract
 
 }
 
+class QuietJettyLogger extends org.mortbay.log.Logger {
+  def setDebugEnabled(e: Boolean) = null
+  def isDebugEnabled() = false
+  def debug(msg: String, arg0: Object, arg1: Object) = null
+  def debug(msg: String, t: Throwable) = null
+  def getLogger(name: String) = this
+  def info(msg: String, arg0: Object, arg1: Object) = null
+  def warn(msg: String, t: Throwable) {
+    println("WARN: " + msg)
+    t.printStackTrace();
+  }
+  def warn(msg: String, arg0: Object, arg1: Object) {
+    println("WARN: " + msg)
+  }
+
+}
