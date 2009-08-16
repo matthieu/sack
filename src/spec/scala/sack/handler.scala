@@ -32,14 +32,20 @@ object HandlerSpecs extends Specification with HttpClientHelper {
     doLast { OtherChickenApp.stop }
   }
 
-  "Handler-provided environment" should {
+  "Handler environment" should {
     doFirst { EnvValidationApp.main(null); }
 
     "provide the request method" in {
-      val env = restoreEnv(GET(url)._3(0))
       env must havePair("REQUEST_METHOD"->"GET")
     }
+    "provide a content type header" in {
+      env must haveKey("HTTP_User-Agent")
+    }
+    "provide the URL scheme" in {
+      env must havePair("sack.url_scheme"->"http")
+    }
 
+    def env = restoreEnv(GET(url)._3(0))
     def restoreEnv(b: String) = Map(b.split("\\|").map(splitAt("\\~")): _*)
     def splitAt(sep: String)(s: String): Tuple2[String,String] = {
       val a = s.split(sep)
