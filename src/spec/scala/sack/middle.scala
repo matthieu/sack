@@ -12,11 +12,12 @@ object MiddleWareSpecs extends Specification with HttpClientHelper {
   }
   class SinglePath(name: String) extends SackHandler {
     def apply(env: Req) =
-      if (env("PATH_INFO") == "/"+name.toLowerCase) (200, Map("Content-Type"->"text/plain"), List(name+" forever"))
+      if (env("PATH_INFO") == "/"+name.toLowerCase)
+        (200, Map("Content-Type"->"text/plain"), List(name+" forever"))
       else (404, null, null)
   }
 
-  "Cascade Handler" should {
+  "Cascade middleware" should {
     doFirst { CascadeApp.main(null) }
 
     "should stop at first response" in {
@@ -33,5 +34,37 @@ object MiddleWareSpecs extends Specification with HttpClientHelper {
     }
 
     doLast { CascadeApp.stop }
+  }
+
+
+  object MultiPathApp extends SackApp {
+    def build = Multi("/foo"->matched("foo"), "/bar/baz"->matched("baz"), "/bar"->matched("bar"))
+    def matched(name: String) = 
+      (env: Req) => (200, Map("Content-Type"->"text/plain"), List(name))
+  }
+
+  "Multi middleware" should {
+    doFirst { MultiPathApp.main(null) }
+
+    "should match a simple radical" in {
+      GET(url+"foo")._3(0) must_== "foo"
+    }
+    "should match a slashed start path" in {
+      GET(url+"bar/")._3(0) must_== "bar"
+    }
+    "should match a longer path" in {
+      GET(url+"bar/quux")._3(0) must_== "bar"
+    }
+    "should match a complete path" in {
+      GET(url+"bar/baz")._3(0) must_== "baz"
+    }
+    "should return a 404 when all fail" in {
+      GET(url+"quux")._1 must_== 404
+    }
+    "should fail when path starts with but longer than radical" in {
+      GET(url+"fooo/bar")._1 must_== 404
+    }
+
+    doLast { MultiPathApp.stop }
   }
 }
