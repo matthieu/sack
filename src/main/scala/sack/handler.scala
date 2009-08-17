@@ -1,4 +1,4 @@
-package sack;
+package sack
 
 import org.mortbay.jetty.Server
 import org.mortbay.jetty.Request
@@ -46,9 +46,9 @@ class JettyHandler(h: (SackTypes#Req => SackTypes#Resp)) extends AbstractHandler
 
     val res = h.apply(buildEnv(base_request))
 
-    for ((k,v)<-res._2) response.setHeader(k, v)
     response.setStatus(res._1);
-    response.getWriter().print(res._3(0));
+    if (res._2 != null) for ((k,v)<-res._2) response.setHeader(k, v)
+    if (res._3 != null) response.getWriter().print(res._3(0));
   }
 
   def buildEnv(r: Request) = Map("REQUEST_METHOD"->r.getMethod, "SCRIPT_NAME"->r.getServletPath,
